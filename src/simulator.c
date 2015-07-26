@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
-#include <unistd.h>
+#include <unistd.h> /* usleep, requires BSD_SOURCE */
 
 volatile uint16_t global_time_secs;
 pthread_mutex_t global_time_secs_mutex;
+
+volatile uint8_t hour_intensity[12];
+volatile uint8_t minute_intensity[12];
 
 void *inc_sec_function(void *args)
 {
@@ -45,7 +48,7 @@ void *time_printer_function(void *args)
 	return NULL;
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
 	pthread_t inc_sec_thread;
 	pthread_t time_printer_thread;

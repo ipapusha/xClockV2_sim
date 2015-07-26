@@ -1,10 +1,10 @@
 CC := gcc
-TARGET := xClockV2_sim
+TARGET := xClockV2-sim
 SRCDIR := src
 OBJDIR := obj
 CFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
-LDFLAGS := -lpthread
+LDFLAGS := -lpthread -lglut
 CFLAGS := -Wall -pedantic -ansi
 CFLAGS += -std=c99
 #CFLAGS += -O3 -DNDEBUG=1
@@ -12,7 +12,8 @@ CFLAGS += -std=c99
 default: $(TARGET)
 
 $(TARGET): $(OBJFILES)
-	$(CC) $(LDFLAGS) -o $@ $^
+	#$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
