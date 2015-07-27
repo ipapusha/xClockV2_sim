@@ -1,18 +1,62 @@
 #define _BSD_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <pthread.h>
 #include <unistd.h> /* usleep, requires BSD_SOURCE */
 
-volatile uint16_t global_time_secs;
-pthread_mutex_t global_time_secs_mutex;
+#include "simulator.h"
 
-volatile uint8_t hour_intensity[12];
-volatile uint8_t minute_intensity[12];
+/*
+ * =============================================================================
+ * register worker thread callbacks here
+ * =============================================================================
+ */
+void *counter_sim(void *args);
+void *console_printer(void *args);
+void *(*thread_fun[2])(void *) = {counter_sim, console_printer};
 
-void *inc_sec_function(void *args)
-{
+/*
+ * =============================================================================
+ * external interface to simulation file, don't need to change anything here
+ * =============================================================================
+ */
+
+// count the number of worker threads (at compile time)
+// using the array of registered function pointers thread_fun
+#define countof(a) (sizeof(a) / sizeof(*(a)))
+#define NTHREADS (countof(thread_fun))
+static pthread_t sim_threads[NTHREADS];
+
+// start the worker threads
+void start_sim(void) {
+	// create worker threads
+	int i;
+	for (i = 0; i < NTHREADS; ++i) {
+		if (pthread_create(&sim_threads[i], NULL, (*thread_fun[i]), NULL) != 0) {
+			fprintf(stderr, "Error creating thread %d\n", i);
+			exit(EXIT_FAILURE);
+		}
+	}
+}
+
+// block until all workers done
+void wait_sim(void) {
+	int i;
+	for (i = 0; i < NTHREADS; ++i) {
+		if (sim_threads[i]) {
+			pthread_join(sim_threads[i], NULL);
+		}
+	}
+}
+
+/*
+ * =============================================================================
+ * worker thread definitions
+ * =============================================================================
+ */
+
+void *counter_sim(void *args) {
 	uint16_t cur_time_secs;
 	time_t rawtime;
 	struct tm *timeinfo;
@@ -36,8 +80,7 @@ void *inc_sec_function(void *args)
 	return NULL;
 }
 
-void *time_printer_function(void *args)
-{
+void *console_printer(void *args) {
 	while (1) {
 		pthread_mutex_lock(&global_time_secs_mutex);
 		printf("%d\n", global_time_secs);
@@ -48,22 +91,3 @@ void *time_printer_function(void *args)
 	return NULL;
 }
 
-int test_main(int argc, char *argv[])
-{
-	pthread_t inc_sec_thread;
-	pthread_t time_printer_thread;
-	
-	// create thread to increment global variable
-	if (pthread_create(&inc_sec_thread, NULL, inc_sec_function, NULL) != 0) {
-		fprintf(stderr, "Error creating thread\n");
-		exit(EXIT_FAILURE);
-	}
-	if (pthread_create(&time_printer_thread, NULL, time_printer_function, NULL) != 0) {
-		fprintf(stderr, "Error creating thread\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// join threads
-	pthread_join(inc_sec_thread, NULL);
-	return EXIT_SUCCESS;
-}
