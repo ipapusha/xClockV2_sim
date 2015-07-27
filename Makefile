@@ -4,7 +4,7 @@ SRCDIR := src
 OBJDIR := obj
 CFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
-LDFLAGS := -lpthread -lglut
+LDFLAGS := -lpthread -lglut -lm
 CFLAGS := -Wall -pedantic -ansi
 CFLAGS += -std=c99
 #CFLAGS += -O3 -DNDEBUG=1
