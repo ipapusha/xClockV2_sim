@@ -4,12 +4,13 @@
 #include <pthread.h>
 
 // simulator updates these global variables
-pthread_mutex_t global_time_secs_mutex;
-uint16_t global_time_secs;
+typedef uint32_t gtime_t;
+pthread_mutex_t global_time_millis_mutex;
+gtime_t global_time_millis;
 
 pthread_mutex_t global_intensity_mutex;
-uint8_t global_hour_intensity[12];
-uint8_t global_minute_intensity[12];
+uint8_t global_outer_intensity[12];
+uint8_t global_inner_intensity[12];
 
 // interface to multithreaded simulator
 void start_sim(void);	// start simulator threads

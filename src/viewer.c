@@ -45,7 +45,7 @@ void draw_string(GLfloat x, GLfloat y, char *str) {
 	}
 }
 
-void draw_clock(uint8_t *hour_intensity, uint8_t *min_intensity, uint16_t time_secs) {
+void draw_clock(uint8_t *outer_intensity, uint8_t *inner_intensity, gtime_t time_millis) {
 	const float clock_hw = 0.7f;
 	const float hour_w   = 0.15f; 
 	const float min_w    = 0.12f; 
@@ -56,35 +56,35 @@ void draw_clock(uint8_t *hour_intensity, uint8_t *min_intensity, uint16_t time_s
 	char strbuf[256];
 
 	// hours
-	draw_square( 0.0,  big, hour_w, (float)hour_intensity[0]/255.0);
-	draw_square( sma,  big, hour_w, (float)hour_intensity[1]/255.0);
-	draw_square( big,  sma, hour_w, (float)hour_intensity[2]/255.0);
-	draw_square( big,  0.0, hour_w, (float)hour_intensity[3]/255.0);
-	draw_square( big, -sma, hour_w, (float)hour_intensity[4]/255.0);
-	draw_square( sma, -big, hour_w, (float)hour_intensity[5]/255.0);
-	draw_square( 0.0, -big, hour_w, (float)hour_intensity[6]/255.0);
-	draw_square(-sma, -big, hour_w, (float)hour_intensity[7]/255.0);
-	draw_square(-big, -sma, hour_w, (float)hour_intensity[8]/255.0);
-	draw_square(-big,  0.0, hour_w, (float)hour_intensity[9]/255.0);
-	draw_square(-big,  sma, hour_w, (float)hour_intensity[10]/255.0);
-	draw_square(-sma,  big, hour_w, (float)hour_intensity[11]/255.0);
+	draw_square( 0.0,  big, hour_w, (float)outer_intensity[0]/255.0);
+	draw_square( sma,  big, hour_w, (float)outer_intensity[1]/255.0);
+	draw_square( big,  sma, hour_w, (float)outer_intensity[2]/255.0);
+	draw_square( big,  0.0, hour_w, (float)outer_intensity[3]/255.0);
+	draw_square( big, -sma, hour_w, (float)outer_intensity[4]/255.0);
+	draw_square( sma, -big, hour_w, (float)outer_intensity[5]/255.0);
+	draw_square( 0.0, -big, hour_w, (float)outer_intensity[6]/255.0);
+	draw_square(-sma, -big, hour_w, (float)outer_intensity[7]/255.0);
+	draw_square(-big, -sma, hour_w, (float)outer_intensity[8]/255.0);
+	draw_square(-big,  0.0, hour_w, (float)outer_intensity[9]/255.0);
+	draw_square(-big,  sma, hour_w, (float)outer_intensity[10]/255.0);
+	draw_square(-sma,  big, hour_w, (float)outer_intensity[11]/255.0);
 
 	// minutes
-	draw_tri(min_w, min_h,   90, (float)min_intensity[0]/255.0);
-	draw_tri(min_w, min_h,   60, (float)min_intensity[1]/255.0);
-	draw_tri(min_w, min_h,   30, (float)min_intensity[2]/255.0);
-	draw_tri(min_w, min_h,    0, (float)min_intensity[3]/255.0);
-	draw_tri(min_w, min_h,  -30, (float)min_intensity[4]/255.0);
-	draw_tri(min_w, min_h,  -60, (float)min_intensity[5]/255.0);
-	draw_tri(min_w, min_h,  -90, (float)min_intensity[6]/255.0);
-	draw_tri(min_w, min_h, -120, (float)min_intensity[7]/255.0);
-	draw_tri(min_w, min_h, -150, (float)min_intensity[8]/255.0);
-	draw_tri(min_w, min_h,  180, (float)min_intensity[9]/255.0);
-	draw_tri(min_w, min_h,  150, (float)min_intensity[10]/255.0);
-	draw_tri(min_w, min_h,  120, (float)min_intensity[11]/255.0);
+	draw_tri(min_w, min_h,   90, (float)inner_intensity[0]/255.0);
+	draw_tri(min_w, min_h,   60, (float)inner_intensity[1]/255.0);
+	draw_tri(min_w, min_h,   30, (float)inner_intensity[2]/255.0);
+	draw_tri(min_w, min_h,    0, (float)inner_intensity[3]/255.0);
+	draw_tri(min_w, min_h,  -30, (float)inner_intensity[4]/255.0);
+	draw_tri(min_w, min_h,  -60, (float)inner_intensity[5]/255.0);
+	draw_tri(min_w, min_h,  -90, (float)inner_intensity[6]/255.0);
+	draw_tri(min_w, min_h, -120, (float)inner_intensity[7]/255.0);
+	draw_tri(min_w, min_h, -150, (float)inner_intensity[8]/255.0);
+	draw_tri(min_w, min_h,  180, (float)inner_intensity[9]/255.0);
+	draw_tri(min_w, min_h,  150, (float)inner_intensity[10]/255.0);
+	draw_tri(min_w, min_h,  120, (float)inner_intensity[11]/255.0);
 
 	// draw current time in seconds
-	snprintf(strbuf, sizeof(strbuf), "time: %d", time_secs);
+	snprintf(strbuf, sizeof(strbuf), "millis: %d", time_millis);
 	draw_string(-1.0f+eps, -1.0f+eps, strbuf);
 }
 
@@ -94,10 +94,10 @@ void display(void) {
 
 	// commence drawing
 	pthread_mutex_lock(&global_intensity_mutex);
-	pthread_mutex_lock(&global_time_secs_mutex);
-	draw_clock(global_hour_intensity, global_minute_intensity, global_time_secs);
+	pthread_mutex_lock(&global_time_millis_mutex);
+	draw_clock(global_outer_intensity, global_inner_intensity, global_time_millis);
 	pthread_mutex_unlock(&global_intensity_mutex);
-	pthread_mutex_unlock(&global_time_secs_mutex);
+	pthread_mutex_unlock(&global_time_millis_mutex);
 
 	// render now
 	glutSwapBuffers();
