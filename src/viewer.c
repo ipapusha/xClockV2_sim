@@ -103,7 +103,7 @@ void display(void) {
 	glutSwapBuffers();
 
 	// schedule to redisplay
-	glutPostRedisplay(); // not the best way to animate
+	//glutPostRedisplay(); // not the best way to animate
 }
 
 void keypressed(unsigned char key, int x, int y) {
@@ -114,6 +114,11 @@ void keypressed(unsigned char key, int x, int y) {
 		default:
 			break;	
 	}
+}
+
+void timercb(int ms) {
+	glutTimerFunc(ms, timercb, ms);
+	glutPostRedisplay();
 }
 
 int main(int argc, char *argv[]) {
@@ -134,6 +139,7 @@ int main(int argc, char *argv[]) {
 	// register callbacks
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keypressed);
+	glutTimerFunc(20, timercb, 20); // target 50fps
 
 	// simulation
 	start_sim();
