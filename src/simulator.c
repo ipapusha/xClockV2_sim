@@ -16,7 +16,7 @@
 void *counter_sim(void *args);
 void *console_printer(void *args);
 void *determine_intensities(void *args);
-void *(*thread_fun[3])(void *) = { 
+void *(*thread_fun[])(void *) = { 
 	counter_sim, console_printer, determine_intensities 
 };
 
@@ -64,12 +64,14 @@ gtime_t sample_cur_time(void) {
 	struct timeval tv;
 	struct timezone tz;
 	
+	// clock_gettime() is not reliable on OSX
 	gettimeofday(&tv, &tz);
 
 	// UTC
 	//return (tv.tv_sec % (12*60*60))*1000 + (tv.tv_usec/1000L);
 	
 	// in local timezone
+	// because I don't trust localtime()
 	return ((tv.tv_sec - (tz.tz_minuteswest - 60*tz.tz_dsttime)*60) % (12*60*60))*1000 + (tv.tv_usec/1000L);
 }
 
@@ -156,7 +158,6 @@ void *determine_intensities(void *args) {
 		uint32_t level2 = (uint32_t)UINT8_MAX*((uint32_t)(secs % 5)*125 + millis/8)/625;
 		global_inner_intensity[lidx] = (uint8_t)level1;
 		global_inner_intensity[ridx] = (uint8_t)level2;
-
 
 		// hours and minutes are always solid
 		global_outer_intensity[hours] = 255;
