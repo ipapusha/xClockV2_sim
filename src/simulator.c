@@ -148,10 +148,15 @@ void *determine_intensities(void *args) {
 		lidx = secs / 5;
 		ridx = (lidx + 1) % 12;
 
-		float frac = ((secs % 5)*1000.0 + millis)/5000.0;
+		//float frac = ((secs % 5)*1000.0 + millis)/5000.0;
+		//global_inner_intensity[lidx] = (uint8_t)(UINT8_MAX * (1-frac));
+		//global_inner_intensity[ridx] = (uint8_t)(UINT8_MAX * (frac));
 
-		global_inner_intensity[lidx] = (uint8_t)(UINT8_MAX * (1-frac));
-		global_inner_intensity[ridx] = (uint8_t)(UINT8_MAX * (frac));
+		uint32_t level1 = (uint32_t)UINT8_MAX*(625 - ((uint32_t)(secs % 5)*125 + millis/8))/625;
+		uint32_t level2 = (uint32_t)UINT8_MAX*((uint32_t)(secs % 5)*125 + millis/8)/625;
+		global_inner_intensity[lidx] = (uint8_t)level1;
+		global_inner_intensity[ridx] = (uint8_t)level2;
+
 
 		// hours and minutes are always solid
 		global_outer_intensity[hours] = 255;
