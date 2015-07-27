@@ -4,15 +4,23 @@ SRCDIR := src
 OBJDIR := obj
 CFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
-LDFLAGS := -lpthread -lglut -lm
+LDFLAGS := -lpthread -lm
 CFLAGS := -Wall -pedantic -ansi
 CFLAGS += -std=c99
 #CFLAGS += -O3 -DNDEBUG=1
 
+# OSX uses frameworks instead
+OS := $(shell uname)
+ifeq ($(OS),Darwin)
+	LDFLAGS += -framework GLUT -framework OpenGL
+	CFLAGS += -Wno-deprecated-declarations
+else
+	LDFLAGS += -lglut
+endif
+
 default: $(TARGET)
 
 $(TARGET): $(OBJFILES)
-	#$(CC) $(LDFLAGS) -o $@ $^
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
