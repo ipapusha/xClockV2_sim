@@ -1,12 +1,11 @@
 #define _BSD_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <unistd.h> /* usleep, requires BSD_SOURCE */
-#include <sys/time.h>
+#include <unistd.h> /* usleep, requires _BSD_SOURCE */
 
 #include "simulator.h"
+#include "current_utc_time.h"
 
 /*
  * =============================================================================
@@ -61,29 +60,16 @@ void wait_sim(void) {
  */
 
 gtime_t sample_cur_time(void) {
-	struct timeval tv;
-	struct timezone tz;
-	struct tm *tm;
-
-	gettimeofday(&tv, &tz);
-	tm = localtime(&tv.tv_sec);
-
-	return (tm->tm_hour % 12)*60*60*1000 + 
-		(tm->tm_min)*60*1000 + (tm->tm_sec)*1000 + (tv.tv_usec % 1000);
+	struct timespec ts;
+	current_utc_time(&ts);
+	return (ts.tv_sec % (12*60*60))*1000 + (ts.tv_nsec/1000000L);
 }
 
 void *counter_sim(void *args) {
 	gtime_t cur_time_millis;
-	//time_t rawtime;
-	//struct tm *timeinfo;
-	//struct timespec ts;
 	
 	while (1) {
 		// determine time
-		//clock_gettime(CLOCK_REALTIME, &ts);
-		//timeinfo = localtime(&ts.tv_sec);
-		//cur_time_millis = timeinfo->tm_sec + 60*timeinfo->tm_min +
-		//	60*60*(timeinfo->tm_hour % 12);
 		cur_time_millis = sample_cur_time();
 
 		// update time global variable
@@ -92,7 +78,7 @@ void *counter_sim(void *args) {
 		pthread_mutex_unlock(&global_time_millis_mutex);
 
 		// sleep for a while
-		usleep(1000);
+		usleep(8000);
 	}
 
 	return NULL;
@@ -122,7 +108,7 @@ void *console_printer(void *args) {
 	return NULL;
 }
 
-// called roughly every millisecond
+// called roughly every 1/125 second
 void *determine_intensities(void *args) {
 	gtime_t cur_time_millis;
 	uint8_t hours, mins, secs;
@@ -153,8 +139,11 @@ void *determine_intensities(void *args) {
 		// seconds have different brightnesses
 		lidx = secs / 5;
 		ridx = (lidx + 1) % 12;
-		global_inner_intensity[lidx] = UINT8_MAX/5 * (5 - (secs % 5));
-		global_inner_intensity[ridx] = UINT8_MAX/5 * ((secs % 5));
+
+		float frac = (secs*1000.0 + millis)/5000.0;
+
+		global_inner_intensity[lidx] = (uint8_t)(UINT8_MAX * (1-frac));
+		global_inner_intensity[ridx] = (uint8_t)(UINT8_MAX * (frac));
 
 		// hours and minutes are always solid
 		global_outer_intensity[hours] = 255;
@@ -163,7 +152,8 @@ void *determine_intensities(void *args) {
 		// sleep for a while
 		pthread_mutex_unlock(&global_time_millis_mutex);
 		pthread_mutex_unlock(&global_intensity_mutex);
-		usleep(1000L);
+		
+		usleep(8000L);
 	}
 
 	return NULL;

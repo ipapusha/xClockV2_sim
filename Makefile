@@ -4,7 +4,7 @@ SRCDIR := src
 OBJDIR := obj
 CFILES := $(wildcard $(SRCDIR)/*.c)
 OBJFILES := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
-LDFLAGS := -lpthread -lm
+LDFLAGS := -lpthread -lm 
 CFLAGS := -Wall -pedantic -ansi
 CFLAGS += -std=c99
 #CFLAGS += -O3 -DNDEBUG=1
@@ -13,9 +13,12 @@ CFLAGS += -std=c99
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
 	LDFLAGS += -framework GLUT -framework OpenGL
+	# OSX does not like glut
 	CFLAGS += -Wno-deprecated-declarations
 else
 	LDFLAGS += -lglut
+	# for clock_gettime
+	LDFLAGS += -lrt
 endif
 
 default: $(TARGET)
