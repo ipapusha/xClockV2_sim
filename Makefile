@@ -13,12 +13,10 @@ CFLAGS += -std=c99
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
 	LDFLAGS += -framework GLUT -framework OpenGL
-	# OSX does not like glut
+	# ignore the fact that OSX does not like glut
 	CFLAGS += -Wno-deprecated-declarations
 else
 	LDFLAGS += -lglut
-	# for clock_gettime
-	LDFLAGS += -lrt
 endif
 
 default: $(TARGET)

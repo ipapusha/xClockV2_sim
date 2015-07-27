@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h> /* usleep, requires _BSD_SOURCE */
+#include <sys/time.h>
 
 #include "simulator.h"
-#include "current_utc_time.h"
+
 
 /*
  * =============================================================================
@@ -60,9 +61,16 @@ void wait_sim(void) {
  */
 
 gtime_t sample_cur_time(void) {
-	struct timespec ts;
-	current_utc_time(&ts);
-	return (ts.tv_sec % (12*60*60))*1000 + (ts.tv_nsec/1000000L);
+	struct timeval tv;
+	struct timezone tz;
+	
+	gettimeofday(&tv, &tz);
+
+	// UTC
+	//return (tv.tv_sec % (12*60*60))*1000 + (tv.tv_usec/1000L);
+	
+	// in local timezone
+	return ((tv.tv_sec - (tz.tz_minuteswest - 60*tz.tz_dsttime)*60) % (12*60*60))*1000 + (tv.tv_usec/1000L);
 }
 
 void *counter_sim(void *args) {
@@ -140,7 +148,7 @@ void *determine_intensities(void *args) {
 		lidx = secs / 5;
 		ridx = (lidx + 1) % 12;
 
-		float frac = (secs*1000.0 + millis)/5000.0;
+		float frac = ((secs % 5)*1000.0 + millis)/5000.0;
 
 		global_inner_intensity[lidx] = (uint8_t)(UINT8_MAX * (1-frac));
 		global_inner_intensity[ridx] = (uint8_t)(UINT8_MAX * (frac));
