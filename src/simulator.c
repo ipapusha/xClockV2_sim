@@ -14,7 +14,10 @@
  */
 void *counter_sim(void *args);
 void *console_printer(void *args);
-void *(*thread_fun[2])(void *) = {counter_sim, console_printer};
+void *determine_intensities(void *args);
+void *(*thread_fun[3])(void *) = { 
+	counter_sim, console_printer, determine_intensities 
+};
 
 /*
  * =============================================================================
@@ -81,11 +84,67 @@ void *counter_sim(void *args) {
 }
 
 void *console_printer(void *args) {
+	uint16_t cur_time_secs;
+	uint8_t hours, mins, secs;
+	while (1) {
+		// sample the time
+		pthread_mutex_lock(&global_time_secs_mutex);
+		cur_time_secs = global_time_secs;
+		pthread_mutex_unlock(&global_time_secs_mutex);
+		
+		// print results
+		secs  = cur_time_secs % 60;
+		mins  = (cur_time_secs / 60) % 60;
+		hours = (cur_time_secs / (60*60)) % 12;
+		
+		printf("G|%d|, HMS|%02d:%02d:%02d| \n", cur_time_secs, hours, mins, secs);
+		
+		usleep(1000000L);
+	}
+
+	return NULL;
+}
+
+// called roughly every millisecond
+void *determine_intensities(void *args) {
+	uint16_t cur_time_secs;
+	uint8_t hours, mins, secs;
+
+	uint8_t i;
+	uint8_t lidx, ridx;
+
 	while (1) {
 		pthread_mutex_lock(&global_time_secs_mutex);
-		printf("%d\n", global_time_secs);
+		pthread_mutex_lock(&global_intensity_mutex);
+		
+		// sample the time
+		cur_time_secs = global_time_secs;
+		
+		// determine time from the number of seconds since 12:00:00
+		secs  = cur_time_secs % 60;
+		mins  = (cur_time_secs / 60) % 60;
+		hours = (cur_time_secs / (60*60)) % 12;
+
+		// update intensities
+		for (i = 0; i < 12; ++i) {
+			global_hour_intensity[i] = 0;
+			global_minute_intensity[i] = 0;
+		}
+		
+		// seconds have different brightnesses
+		lidx = secs / 5;
+		ridx = (lidx + 1) % 12;
+		global_minute_intensity[lidx] = UINT8_MAX/5 * (5 - (secs % 5));
+		global_minute_intensity[ridx] = UINT8_MAX/5 * ((secs % 5));
+
+		// hours and minutes are always solid
+		global_hour_intensity[hours] = 255;
+		global_minute_intensity[mins/5] = 255;
+
+		// sleep for a while
 		pthread_mutex_unlock(&global_time_secs_mutex);
-		usleep(1000000L);
+		pthread_mutex_unlock(&global_intensity_mutex);
+		usleep(1000L);
 	}
 
 	return NULL;

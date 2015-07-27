@@ -64,18 +64,18 @@ void draw_clock(uint8_t *hour_intensity, uint8_t *min_intensity, uint16_t time_s
 	draw_square(-sma,  big, hour_w, (float)hour_intensity[11]/255.0);
 
 	// minutes
-	draw_tri(min_w, min_h,   90, (float)hour_intensity[0]/255.0);
-	draw_tri(min_w, min_h,   60, (float)hour_intensity[1]/255.0);
-	draw_tri(min_w, min_h,   30, (float)hour_intensity[2]/255.0);
-	draw_tri(min_w, min_h,    0, (float)hour_intensity[3]/255.0);
-	draw_tri(min_w, min_h,  -30, (float)hour_intensity[4]/255.0);
-	draw_tri(min_w, min_h,  -60, (float)hour_intensity[5]/255.0);
-	draw_tri(min_w, min_h,  -90, (float)hour_intensity[6]/255.0);
-	draw_tri(min_w, min_h, -120, (float)hour_intensity[7]/255.0);
-	draw_tri(min_w, min_h, -150, (float)hour_intensity[8]/255.0);
-	draw_tri(min_w, min_h,  180, (float)hour_intensity[9]/255.0);
-	draw_tri(min_w, min_h,  150, (float)hour_intensity[10]/255.0);
-	draw_tri(min_w, min_h,  120, (float)hour_intensity[11]/255.0);
+	draw_tri(min_w, min_h,   90, (float)min_intensity[0]/255.0);
+	draw_tri(min_w, min_h,   60, (float)min_intensity[1]/255.0);
+	draw_tri(min_w, min_h,   30, (float)min_intensity[2]/255.0);
+	draw_tri(min_w, min_h,    0, (float)min_intensity[3]/255.0);
+	draw_tri(min_w, min_h,  -30, (float)min_intensity[4]/255.0);
+	draw_tri(min_w, min_h,  -60, (float)min_intensity[5]/255.0);
+	draw_tri(min_w, min_h,  -90, (float)min_intensity[6]/255.0);
+	draw_tri(min_w, min_h, -120, (float)min_intensity[7]/255.0);
+	draw_tri(min_w, min_h, -150, (float)min_intensity[8]/255.0);
+	draw_tri(min_w, min_h,  180, (float)min_intensity[9]/255.0);
+	draw_tri(min_w, min_h,  150, (float)min_intensity[10]/255.0);
+	draw_tri(min_w, min_h,  120, (float)min_intensity[11]/255.0);
 
 	// draw current time in seconds
 	snprintf(strbuf, sizeof(strbuf), "time: %d", time_secs);
