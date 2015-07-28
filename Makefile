@@ -16,7 +16,7 @@ ifeq ($(OS),Darwin)
 	# ignore the fact that OSX does not like glut
 	CFLAGS += -Wno-deprecated-declarations
 else
-	LDFLAGS += -lglut
+	LDFLAGS += -lGL -lGLU -lglut 
 endif
 
 default: $(TARGET)
