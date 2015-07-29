@@ -16,8 +16,8 @@
 void *counter_sim(void *args);
 void *console_printer(void *args);
 void *determine_intensities(void *args);
-void *(*thread_fun[])(void *) = { 
-	counter_sim, console_printer, determine_intensities 
+void *(*thread_fun[])(void *) = {
+	counter_sim, console_printer, determine_intensities
 };
 
 /*
@@ -48,8 +48,9 @@ void start_sim(void) {
 void wait_sim(void) {
 	int i;
 	for (i = 0; i < NTHREADS; ++i) {
-		if (sim_threads[i]) {
-			pthread_join(sim_threads[i], NULL);
+		if (pthread_join(sim_threads[i], NULL) != 0) {
+			fprintf(stderr, "Error joining thread %d\n", i);
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -63,13 +64,13 @@ void wait_sim(void) {
 gtime_t sample_cur_time(void) {
 	struct timeval tv;
 	struct timezone tz;
-	
+
 	// clock_gettime() is not reliable on OSX
 	gettimeofday(&tv, &tz);
 
 	// UTC
 	//return (tv.tv_sec % (12*60*60))*1000 + (tv.tv_usec/1000L);
-	
+
 	// in local timezone
 	// because I don't trust localtime()
 	return ((tv.tv_sec - (tz.tz_minuteswest - 60*tz.tz_dsttime)*60) % (12*60*60))*1000 + (tv.tv_usec/1000L);
@@ -77,7 +78,7 @@ gtime_t sample_cur_time(void) {
 
 void *counter_sim(void *args) {
 	gtime_t cur_time_millis;
-	
+
 	while (1) {
 		// determine time
 		cur_time_millis = sample_cur_time();
@@ -103,15 +104,15 @@ void *console_printer(void *args) {
 		pthread_mutex_lock(&global_time_millis_mutex);
 		cur_time_millis = global_time_millis;
 		pthread_mutex_unlock(&global_time_millis_mutex);
-		
+
 		// print results
 		millis = cur_time_millis % 1000;
 		secs   = (cur_time_millis / 1000) % 60;
 		mins   = (cur_time_millis / (60*1000)) % 60;
 		hours  = (cur_time_millis / (60*60*1000)) % 12;
-		
+
 		printf("G|%d|, HMS|%02d:%02d:%02d.%03d| \n", cur_time_millis, hours, mins, secs, millis);
-		
+
 		usleep(1000000L);
 	}
 
@@ -127,25 +128,27 @@ void *determine_intensities(void *args) {
 	uint8_t i;
 	uint8_t lidx, ridx;
 
+	uint8_t level1, level2;
+
 	while (1) {
-		pthread_mutex_lock(&global_time_millis_mutex);
-		pthread_mutex_lock(&global_intensity_mutex);
-		
 		// sample the time
+		pthread_mutex_lock(&global_time_millis_mutex);
 		cur_time_millis = global_time_millis;
-		
+		pthread_mutex_unlock(&global_time_millis_mutex);
+
 		// determine time from the number of seconds since 12:00:00
 		millis = cur_time_millis % 1000;
 		secs   = (cur_time_millis / 1000) % 60;
 		mins   = (cur_time_millis / (60*1000)) % 60;
 		hours  = (cur_time_millis / (60*60*1000)) % 12;
-		
+
 		// update intensities
+		pthread_mutex_lock(&global_intensity_mutex);
 		for (i = 0; i < 12; ++i) {
 			global_outer_intensity[i] = 0;
 			global_inner_intensity[i] = 0;
 		}
-		
+
 		// seconds have different brightnesses
 		lidx = secs / 5;
 		ridx = (lidx + 1) % 12;
@@ -154,22 +157,20 @@ void *determine_intensities(void *args) {
 		//global_inner_intensity[lidx] = (uint8_t)(UINT8_MAX * (1-frac));
 		//global_inner_intensity[ridx] = (uint8_t)(UINT8_MAX * (frac));
 
-		uint32_t level1 = (uint32_t)UINT8_MAX*(625 - ((uint32_t)(secs % 5)*125 + millis/8))/625;
-		uint32_t level2 = (uint32_t)UINT8_MAX*((uint32_t)(secs % 5)*125 + millis/8)/625;
-		global_inner_intensity[lidx] = (uint8_t)level1;
-		global_inner_intensity[ridx] = (uint8_t)level2;
+		//level2 = (uint8_t)((uint16_t)UINT8_MAX*((uint16_t)(secs % 5)*25 + (uint16_t)millis/40)/125);
+		level2 = (uint8_t)(UINT16_C(255)*(UINT8_C(25)*(secs % UINT8_C(5)) + (uint8_t)(millis >> 3)/UINT8_C(5))/UINT16_C(125));
+		level1 = (uint8_t)(UINT8_C(255) - level2);
+		global_inner_intensity[lidx] = level1;
+		global_inner_intensity[ridx] = level2;
 
 		// hours and minutes are always solid
 		global_outer_intensity[hours] = 255;
 		global_inner_intensity[mins/5] = 255;
+		pthread_mutex_unlock(&global_intensity_mutex);
 
 		// sleep for a while
-		pthread_mutex_unlock(&global_time_millis_mutex);
-		pthread_mutex_unlock(&global_intensity_mutex);
-		
 		usleep(8000L);
 	}
 
 	return NULL;
 }
-
