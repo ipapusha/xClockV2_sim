@@ -10,3 +10,5 @@ apt-get install libglu1-mesa-dev
 apt-get install libgl1-mesa-glx 
 apt-get install libgl1-mesa-dev
 ```
+
+![Simulation example](https://raw.githubusercontent.com/ipapusha/xClockV2_sim/master/doc/screenshot.png)
